@@ -55,13 +55,37 @@ export const saveCertificate = async (req, res) => {
       certCity = "quito";
     }
 
-    // 👉 NIIF 16 (ID = 10) ✅ NUEVO
+    // 👉 NIIF 16 (ID = 10)
     else if (Number(course_id) === 10) {
       pdfPath = `/certificados/niff16.pdf`;
       certCity = "quito";
     }
 
-    // 👉 OTROS (NO CONFIGURADOS)
+    // 👉 ACTUALIZACIÓN LABORAL 24/10/2025 (ID = 1)
+    else if (Number(course_id) === 1) {
+      pdfPath = `/certificados/actualizacion_laboral.pdf`;
+      certCity = "quito";
+    }
+
+    // 👉 ACTUALIZACIÓN LABORAL 20/09/2025 (ID = 6)
+    else if (Number(course_id) === 6) {
+      pdfPath = `/certificados/actualizacion_laboral_2.pdf`;
+      certCity = "quito";
+    }
+
+    // 👉 NIC 2 INVENTARIOS (ID = 5)
+    else if (Number(course_id) === 5) {
+      pdfPath = `/certificados/nic_2.pdf`;
+      certCity = "quito";
+    }
+
+    // 👉 ICE – IMPUESTOS CONSUMOS ESPECIALES (ID = 7) ✅ NUEVO
+    else if (Number(course_id) === 7) {
+      pdfPath = `/certificados/ice.pdf`;
+      certCity = "quito";
+    }
+
+    // 👉 OTROS
     else {
       return res.status(400).json({
         message: "Curso no configurado para certificados",
@@ -118,7 +142,6 @@ export const downloadCertificate = async (req, res) => {
       return res.status(404).json({ message: "Certificado no encontrado" });
     }
 
-    // 🔹 DEFINIR PDF SEGÚN CURSO
     let pdfFile = "";
 
     if (Number(courseId) === 13) {
@@ -134,7 +157,19 @@ export const downloadCertificate = async (req, res) => {
       pdfFile = "construccion.pdf";
     }
     else if (Number(courseId) === 10) {
-      pdfFile = "niff16.pdf"; // ✅ NUEVO
+      pdfFile = "niff16.pdf";
+    }
+    else if (Number(courseId) === 1) {
+      pdfFile = "actualizacion_laboral.pdf";
+    }
+    else if (Number(courseId) === 6) {
+      pdfFile = "actualizacion_laboral_2.pdf";
+    }
+    else if (Number(courseId) === 5) {
+      pdfFile = "nic_2.pdf";
+    }
+    else if (Number(courseId) === 7) {
+      pdfFile = "ice.pdf"; // ✅ NUEVO
     }
     else {
       return res.status(400).json({
