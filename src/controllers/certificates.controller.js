@@ -15,6 +15,7 @@ export const saveCertificate = async (req, res) => {
       return res.status(400).json({ message: "Datos incompletos" });
     }
 
+    // ❌ Evitar duplicados
     const exists = await Certificate.findOne({
       where: { user_id: userId, course_id },
     });
@@ -28,8 +29,16 @@ export const saveCertificate = async (req, res) => {
     let pdfPath = "";
     let certCity = null;
 
-    // 👉 CIERRE FISCAL (ID = 13)
-    if (Number(course_id) === 13) {
+    /* ===== MAPEO CURSO → PDF ===== */
+
+    // ID 1 – Actualización Laboral
+    if (Number(course_id) === 1) {
+      pdfPath = `/certificados/actualizacionLaboral.pdf`;
+      certCity = "quito";
+    }
+
+    // ID 3 – Cierre Fiscal (por ciudad)
+    else if (Number(course_id) === 3) {
       if (!city) {
         return res.status(400).json({ message: "Ciudad requerida" });
       }
@@ -37,61 +46,62 @@ export const saveCertificate = async (req, res) => {
       certCity = city;
     }
 
-    // 👉 AGENCIA DE VIAJES (ID = 2)
-    else if (Number(course_id) === 2) {
-      pdfPath = `/certificados/viajes.pdf`;
+    // ID 4 – Actualización Laboral Protocolo
+    else if (Number(course_id) === 4) {
+      pdfPath = `/certificados/actualizacionLaboralProtocolo.pdf`;
       certCity = "quito";
     }
 
-    // 👉 IMPUESTO RENTA PN (ID = 12)
-    else if (Number(course_id) === 12) {
-      pdfPath = `/certificados/impuesto_renta.pdf`;
-      certCity = "quito";
-    }
-
-    // 👉 CONSTRUCCIÓN (ID = 11)
-    else if (Number(course_id) === 11) {
-      pdfPath = `/certificados/construccion.pdf`;
-      certCity = "quito";
-    }
-
-    // 👉 NIIF 16 (ID = 10)
-    else if (Number(course_id) === 10) {
-      pdfPath = `/certificados/niff16.pdf`;
-      certCity = "quito";
-    }
-
-    // 👉 ACTUALIZACIÓN LABORAL 24/10/2025 (ID = 1)
-    else if (Number(course_id) === 1) {
-      pdfPath = `/certificados/actualizacion_laboral.pdf`;
-      certCity = "quito";
-    }
-
-    // 👉 ACTUALIZACIÓN LABORAL 20/09/2025 (ID = 6)
-    else if (Number(course_id) === 6) {
-      pdfPath = `/certificados/actualizacion_laboral_2.pdf`;
-      certCity = "quito";
-    }
-
-    // 👉 NIC 2 INVENTARIOS (ID = 5)
+    // ID 5 – Agencia de Viajes
     else if (Number(course_id) === 5) {
+      pdfPath = `/certificados/agenciaDeViajes.pdf`;
+      certCity = "quito";
+    }
+
+    // ID 7 – NIC 2
+    else if (Number(course_id) === 7) {
       pdfPath = `/certificados/nic_2.pdf`;
       certCity = "quito";
     }
 
-    // 👉 ICE – IMPUESTOS CONSUMOS ESPECIALES (ID = 7) ✅ NUEVO
-    else if (Number(course_id) === 7) {
-      pdfPath = `/certificados/ice.pdf`;
+    // ID 8 – NIIF 16
+    else if (Number(course_id) === 8) {
+      pdfPath = `/certificados/niif_16.pdf`;
       certCity = "quito";
     }
 
-    // 👉 OTROS
+    // ID 10 – Anexo RDP
+    else if (Number(course_id) === 10) {
+      pdfPath = `/certificados/anexoRdp.pdf`;
+      certCity = "quito";
+    }
+
+    // ID 12 – Sin Fines de Lucro Contable
+    else if (Number(course_id) === 12) {
+      pdfPath = `/certificados/sinFinesDeLucroContable.pdf`;
+      certCity = "quito";
+    }
+
+    // ID 13 – Sin Fines de Lucro Tributario
+    else if (Number(course_id) === 13) {
+      pdfPath = `/certificados/sinFinesDeLucroTributario.pdf`;
+      certCity = "quito";
+    }
+
+    // ID 14 – Declaración IR
+    else if (Number(course_id) === 14) {
+      pdfPath = `/certificados/declaracionIr.pdf`;
+      certCity = "quito";
+    }
+
+    // ❌ Curso no configurado
     else {
       return res.status(400).json({
         message: "Curso no configurado para certificados",
       });
     }
 
+    // ✅ Guardar en BD
     const cert = await Certificate.create({
       user_id: userId,
       course_id,
@@ -144,32 +154,37 @@ export const downloadCertificate = async (req, res) => {
 
     let pdfFile = "";
 
-    if (Number(courseId) === 13) {
+    /* ===== MAPEO CURSO → PDF ===== */
+
+    if (Number(courseId) === 3) {
       pdfFile = `${cert.city}.pdf`;
-    } 
-    else if (Number(courseId) === 2) {
-      pdfFile = "viajes.pdf";
-    } 
-    else if (Number(courseId) === 12) {
-      pdfFile = "impuesto_renta.pdf";
-    }
-    else if (Number(courseId) === 11) {
-      pdfFile = "construccion.pdf";
-    }
-    else if (Number(courseId) === 10) {
-      pdfFile = "niff16.pdf";
     }
     else if (Number(courseId) === 1) {
-      pdfFile = "actualizacion_laboral.pdf";
+      pdfFile = "actualizacionLaboral.pdf";
     }
-    else if (Number(courseId) === 6) {
-      pdfFile = "actualizacion_laboral_2.pdf";
+    else if (Number(courseId) === 4) {
+      pdfFile = "actualizacionLaboralProtocolo.pdf";
     }
     else if (Number(courseId) === 5) {
-      pdfFile = "nic_2.pdf";
+      pdfFile = "agenciaDeViajes.pdf";
     }
     else if (Number(courseId) === 7) {
-      pdfFile = "ice.pdf"; // ✅ NUEVO
+      pdfFile = "nic_2.pdf";
+    }
+    else if (Number(courseId) === 8) {
+      pdfFile = "niif_16.pdf";
+    }
+    else if (Number(courseId) === 10) {
+      pdfFile = "anexoRdp.pdf";
+    }
+    else if (Number(courseId) === 12) {
+      pdfFile = "sinFinesDeLucroContable.pdf";
+    }
+    else if (Number(courseId) === 13) {
+      pdfFile = "sinFinesDeLucroTributario.pdf";
+    }
+    else if (Number(courseId) === 14) {
+      pdfFile = "declaracionIr.pdf";
     }
     else {
       return res.status(400).json({
@@ -177,6 +192,7 @@ export const downloadCertificate = async (req, res) => {
       });
     }
 
+    // 📂 Ruta física del PDF
     const basePdfPath = path.join(
       process.cwd(),
       "src/assets/certificados",
@@ -186,6 +202,7 @@ export const downloadCertificate = async (req, res) => {
     const pdfBytes = fs.readFileSync(basePdfPath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
 
+    // ✍️ Escribir nombre en el PDF
     const font = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     const page = pdfDoc.getPages()[0];
     const { width } = page.getSize();
