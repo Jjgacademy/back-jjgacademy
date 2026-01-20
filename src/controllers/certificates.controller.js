@@ -39,11 +39,14 @@ export const saveCertificate = async (req, res) => {
 
     // ID 3 – Cierre Fiscal (por ciudad)
     else if (Number(course_id) === 3) {
-      if (!city) {
+      if (!city || typeof city !== "string" || city.trim() === "") {
         return res.status(400).json({ message: "Ciudad requerida" });
       }
-      pdfPath = `/certificados/${city}.pdf`;
-      certCity = city;
+
+      const cleanCity = city.trim().toLowerCase();
+
+      pdfPath = `/certificados/${cleanCity}.pdf`;
+      certCity = cleanCity;
     }
 
     // ID 4 – Actualización Laboral Protocolo
