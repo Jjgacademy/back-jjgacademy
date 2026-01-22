@@ -33,7 +33,7 @@ export const saveCertificate = async (req, res) => {
 
     // ID 1 – Actualización Laboral
     if (Number(course_id) === 1) {
-      pdfPath = `/certificados/actualizacionLaboral.pdf`;
+      pdfPath = "/certificados/actualizacionLaboral.pdf";
       certCity = "quito";
     }
 
@@ -44,56 +44,55 @@ export const saveCertificate = async (req, res) => {
       }
 
       const cleanCity = city.trim().toLowerCase();
-
       pdfPath = `/certificados/${cleanCity}.pdf`;
       certCity = cleanCity;
     }
 
     // ID 4 – Actualización Laboral Protocolo
     else if (Number(course_id) === 4) {
-      pdfPath = `/certificados/actualizacionLaboralProtocolo.pdf`;
+      pdfPath = "/certificados/actualizacionLaboralProtocolo.pdf";
       certCity = "quito";
     }
 
     // ID 5 – Agencia de Viajes
     else if (Number(course_id) === 5) {
-      pdfPath = `/certificados/agenciaDeViajes.pdf`;
+      pdfPath = "/certificados/agenciaDeViajes.pdf";
       certCity = "quito";
     }
 
     // ID 7 – NIC 2
     else if (Number(course_id) === 7) {
-      pdfPath = `/certificados/nic_2.pdf`;
+      pdfPath = "/certificados/nic_2.pdf";
       certCity = "quito";
     }
 
     // ID 8 – NIIF 16
     else if (Number(course_id) === 8) {
-      pdfPath = `/certificados/niif_16.pdf`;
+      pdfPath = "/certificados/niif_16.pdf";
       certCity = "quito";
     }
 
     // ID 10 – Anexo RDP
     else if (Number(course_id) === 10) {
-      pdfPath = `/certificados/anexoRdp.pdf`;
+      pdfPath = "/certificados/anexoRdp.pdf";
       certCity = "quito";
     }
 
     // ID 12 – Sin Fines de Lucro Contable
     else if (Number(course_id) === 12) {
-      pdfPath = `/certificados/sinFinesDeLucroContable.pdf`;
+      pdfPath = "/certificados/sinFinesDeLucroContable.pdf";
       certCity = "quito";
     }
 
     // ID 13 – Sin Fines de Lucro Tributario
     else if (Number(course_id) === 13) {
-      pdfPath = `/certificados/sinFinesDeLucroTributario.pdf`;
+      pdfPath = "/certificados/sinFinesDeLucroTributario.pdf";
       certCity = "quito";
     }
 
     // ID 14 – Declaración IR
     else if (Number(course_id) === 14) {
-      pdfPath = `/certificados/declaracionIr.pdf`;
+      pdfPath = "/certificados/declaracionIr.pdf";
       certCity = "quito";
     }
 
@@ -140,7 +139,7 @@ export const getCertificateByCourse = async (req, res) => {
 };
 
 /* ===============================
-   DESCARGAR CERTIFICADO
+   DESCARGAR CERTIFICADO (FIX FINAL)
 ================================ */
 export const downloadCertificate = async (req, res) => {
   try {
@@ -155,57 +154,31 @@ export const downloadCertificate = async (req, res) => {
       return res.status(404).json({ message: "Certificado no encontrado" });
     }
 
-    let pdfFile = "";
-
-    /* ===== MAPEO CURSO → PDF ===== */
-
-    if (Number(courseId) === 3) {
-      pdfFile = `${cert.city}.pdf`;
-    }
-    else if (Number(courseId) === 1) {
-      pdfFile = "actualizacionLaboral.pdf";
-    }
-    else if (Number(courseId) === 4) {
-      pdfFile = "actualizacionLaboralProtocolo.pdf";
-    }
-    else if (Number(courseId) === 5) {
-      pdfFile = "agenciaDeViajes.pdf";
-    }
-    else if (Number(courseId) === 7) {
-      pdfFile = "nic_2.pdf";
-    }
-    else if (Number(courseId) === 8) {
-      pdfFile = "niif_16.pdf";
-    }
-    else if (Number(courseId) === 10) {
-      pdfFile = "anexoRdp.pdf";
-    }
-    else if (Number(courseId) === 12) {
-      pdfFile = "sinFinesDeLucroContable.pdf";
-    }
-    else if (Number(courseId) === 13) {
-      pdfFile = "sinFinesDeLucroTributario.pdf";
-    }
-    else if (Number(courseId) === 14) {
-      pdfFile = "declaracionIr.pdf";
-    }
-    else {
+    if (!cert.pdf_path) {
       return res.status(400).json({
         message: "Certificado no configurado para este curso",
       });
     }
 
-    // 📂 Ruta física del PDF
+    // 📂 Ruta física REAL del PDF (USANDO BD)
     const basePdfPath = path.join(
       process.cwd(),
-      "src/assets/certificados",
-      pdfFile
+      "src/assets",
+      cert.pdf_path
     );
+
+    // 🔒 Verificar existencia
+    if (!fs.existsSync(basePdfPath)) {
+      console.error("PDF no existe:", basePdfPath);
+      return res.status(404).json({
+        message: "Archivo de certificado no encontrado",
+      });
+    }
 
     const pdfBytes = fs.readFileSync(basePdfPath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
 
-    // ✍️ Escribir nombre en el PDF
+    // ✍️ Escribir nombre
     const font = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     const page = pdfDoc.getPages()[0];
     const { width } = page.getSize();
