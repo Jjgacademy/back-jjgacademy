@@ -31,79 +31,67 @@ export const saveCertificate = async (req, res) => {
 
     /* ===== MAPEO CURSO → PDF ===== */
 
-    // ID 1 – Actualización Laboral
     if (Number(course_id) === 1) {
-      pdfPath = "/certificados/actualizacionLaboral.pdf";
+      pdfPath = "certificados/actualizacionLaboral.pdf";
       certCity = "quito";
     }
 
-    // ID 3 – Cierre Fiscal (por ciudad)
     else if (Number(course_id) === 3) {
       if (!city || typeof city !== "string" || city.trim() === "") {
         return res.status(400).json({ message: "Ciudad requerida" });
       }
 
       const cleanCity = city.trim().toLowerCase();
-      pdfPath = `/certificados/${cleanCity}.pdf`;
+      pdfPath = `certificados/${cleanCity}.pdf`;
       certCity = cleanCity;
     }
 
-    // ID 4 – Actualización Laboral Protocolo
     else if (Number(course_id) === 4) {
-      pdfPath = "/certificados/actualizacionLaboralProtocolo.pdf";
+      pdfPath = "certificados/actualizacionLaboralProtocolo.pdf";
       certCity = "quito";
     }
 
-    // ID 5 – Agencia de Viajes
     else if (Number(course_id) === 5) {
-      pdfPath = "/certificados/agenciaDeViajes.pdf";
+      pdfPath = "certificados/agenciaDeViajes.pdf";
       certCity = "quito";
     }
 
-    // ID 7 – NIC 2
     else if (Number(course_id) === 7) {
-      pdfPath = "/certificados/nic_2.pdf";
+      pdfPath = "certificados/nic_2.pdf";
       certCity = "quito";
     }
 
-    // ID 8 – NIIF 16
     else if (Number(course_id) === 8) {
-      pdfPath = "/certificados/niif_16.pdf";
+      pdfPath = "certificados/niif_16.pdf";
       certCity = "quito";
     }
 
-    // ID 10 – Anexo RDP
     else if (Number(course_id) === 10) {
-      pdfPath = "/certificados/anexoRdp.pdf";
+      pdfPath = "certificados/anexoRdp.pdf";
       certCity = "quito";
     }
 
-    // ID 12 – Sin Fines de Lucro Contable
     else if (Number(course_id) === 12) {
-      pdfPath = "/certificados/sinFinesDeLucroContable.pdf";
+      pdfPath = "certificados/sinFinesDeLucroContable.pdf";
       certCity = "quito";
     }
 
-    // ID 13 – Sin Fines de Lucro Tributario
     else if (Number(course_id) === 13) {
-      pdfPath = "/certificados/sinFinesDeLucroTributario.pdf";
+      pdfPath = "certificados/sinFinesDeLucroTributario.pdf";
       certCity = "quito";
     }
 
-    // ID 14 – Declaración IR
     else if (Number(course_id) === 14) {
-      pdfPath = "/certificados/declaracionIr.pdf";
+      pdfPath = "certificados/declaracionIr.pdf";
       certCity = "quito";
     }
 
-    // ❌ Curso no configurado
     else {
       return res.status(400).json({
         message: "Curso no configurado para certificados",
       });
     }
 
-    // ✅ Guardar en BD
     const cert = await Certificate.create({
       user_id: userId,
       course_id,
@@ -139,7 +127,7 @@ export const getCertificateByCourse = async (req, res) => {
 };
 
 /* ===============================
-   DESCARGAR CERTIFICADO (FIX FINAL)
+   DESCARGAR CERTIFICADO (FIX REAL)
 ================================ */
 export const downloadCertificate = async (req, res) => {
   try {
@@ -160,14 +148,14 @@ export const downloadCertificate = async (req, res) => {
       });
     }
 
-    // 📂 Ruta física REAL del PDF (USANDO BD)
+    // ✅ RUTA CORRECTA (AQUÍ ESTABA EL ERROR)
     const basePdfPath = path.join(
       process.cwd(),
-      "src/assets",
+      "src",
+      "assets",
       cert.pdf_path
     );
 
-    // 🔒 Verificar existencia
     if (!fs.existsSync(basePdfPath)) {
       console.error("PDF no existe:", basePdfPath);
       return res.status(404).json({
@@ -178,7 +166,6 @@ export const downloadCertificate = async (req, res) => {
     const pdfBytes = fs.readFileSync(basePdfPath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
 
-    // ✍️ Escribir nombre
     const font = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     const page = pdfDoc.getPages()[0];
     const { width } = page.getSize();
@@ -203,7 +190,7 @@ export const downloadCertificate = async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="certificado.pdf"`
+      'attachment; filename="certificado.pdf"'
     );
 
     res.send(Buffer.from(finalPdf));
