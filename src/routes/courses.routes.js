@@ -2,6 +2,7 @@ import { Router } from "express";
 import { sequelize } from "../database.js";
 import { QueryTypes } from "sequelize";
 import bcrypt from "bcryptjs";
+import Course from "../models/Course.js";
 
 const router = Router();
 
@@ -531,26 +532,33 @@ router.get("/community/:communityId", async (req, res) => {
 // 🔹 CREAR CURSO (ligado a comunidad)
 // ---------------------------------------------------------
 router.post("/", async (req, res) => {
-  const { title, slug, communityId } = req.body;
-
   try {
-    const result = await sequelize.query(
-      `INSERT INTO courses(title, slug, "communityId")
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      {
-        bind: [title, slug, communityId || 1],
-        type: QueryTypes.INSERT,
-      }
-    );
+    const { title, slug, communityId } = req.body;
 
-    res.json(result[0][0]);
+    if (!title || !slug) {
+      return res.status(400).json({
+        ok: false,
+        error: "title y slug son obligatorios",
+      });
+    }
+
+    const course = await Course.create({
+      title,
+      slug,
+      communityId: communityId || 1,
+    });
+
+    res.json(course);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, error: "Error creando curso" });
+    console.error("CREATE COURSE ERROR:", err);
+    res.status(500).json({
+      ok: false,
+      error: err.message,
+    });
   }
 });
+
 // ---------------------------------------------------------
 // 🔹 OBTENER CURSO POR SLUG
 // ---------------------------------------------------------

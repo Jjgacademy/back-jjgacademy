@@ -3,6 +3,7 @@ import {
   getCommunities,
   getCommunityBySlug,
 } from "../controllers/community.controller.js";
+import { createCommunity } from "../controllers/community.controller.js";
 
 const router = Router();
 
