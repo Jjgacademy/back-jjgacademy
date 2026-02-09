@@ -24,6 +24,40 @@ export const ensureMainCommunity = async () => {
 };
 
 /* =========================
+   🔹 CREAR COMUNIDAD MANUAL
+========================= */
+export const createCommunity = async (req, res) => {
+  try {
+    const { nombre, slug, descripcion } = req.body;
+
+    if (!nombre || !slug) {
+      return res.status(400).json({ message: "Datos incompletos" });
+    }
+
+    const exists = await Community.findOne({
+      where: { slug },
+    });
+
+    if (exists) {
+      return res.status(400).json({
+        message: "La comunidad ya existe",
+      });
+    }
+
+    const community = await Community.create({
+      nombre,
+      slug,
+      descripcion,
+    });
+
+    res.json(community);
+  } catch (error) {
+    console.error("Error createCommunity:", error);
+    res.status(500).json({ message: "Error creando comunidad" });
+  }
+};
+
+/* =========================
    🔹 LISTAR COMUNIDADES (con cursos)
 ========================= */
 export const getCommunities = async (req, res) => {
@@ -33,7 +67,7 @@ export const getCommunities = async (req, res) => {
       include: [
         {
           model: Course,
-          as: "courses", // ✅ debe coincidir con relations.js: Community.hasMany(Course, { as: "courses" })
+          as: "courses",
           required: false,
         },
       ],
