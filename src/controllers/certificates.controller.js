@@ -2,6 +2,9 @@ import Certificate from "../models/Certificate.js";
 import fs from "fs";
 import path from "path";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import Attempt from "../models/Attempt.js";
+import Exam from "../models/Exam.js";
+
 
 /* ===============================
    GUARDAR CERTIFICADO (1 SOLA VEZ)
@@ -10,6 +13,24 @@ export const saveCertificate = async (req, res) => {
   try {
     const userId = req.user.id;
     const { course_id, full_name, city } = req.body;
+    /* 🔒 VALIDAR EXAMEN APROBADO */
+const aprobado = await Attempt.findOne({
+  where: {
+    user_id: userId,
+    aprobado: true,
+  },
+  include: {
+    model: Exam,
+    where: { course_id },
+  },
+});
+
+if (!aprobado) {
+  return res.status(403).json({
+    message: "Debe aprobar el examen para generar certificado",
+  });
+}
+
 
     if (!userId || !course_id || !full_name) {
       return res.status(400).json({ message: "Datos incompletos" });

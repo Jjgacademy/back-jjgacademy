@@ -1,5 +1,34 @@
 import { Course } from "../models/Course.js";
 import { User } from "../models/User.js";
+import Video from "../models/Video.js";
+import Material from "../models/Material.js";
+
+/* =========================
+   OBTENER CURSO POR SLUG
+========================= */
+export const getCourseBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const course = await Course.findOne({
+      where: { slug },
+      include: [
+        { model: Video, required: false },
+        { model: Material, required: false },
+      ],
+    });
+
+    if (!course) {
+      return res.status(404).json({ message: "Curso no encontrado" });
+    }
+
+    res.json(course);
+  } catch (error) {
+    console.error("Error getCourseBySlug:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 export const assignCourse = async (req, res) => {
   try {

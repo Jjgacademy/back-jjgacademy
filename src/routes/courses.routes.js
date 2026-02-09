@@ -5,6 +5,30 @@ import bcrypt from "bcryptjs";
 
 const router = Router();
 
+// ---------------------------------------------------------
+// 🔹 CREAR CURSO
+// ---------------------------------------------------------
+router.post("/create", async (req, res) => {
+  const { title, slug, communityId } = req.body;
+
+  try {
+    const course = await sequelize.query(
+      `INSERT INTO courses(title, slug, "communityId")
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      {
+        bind: [title, slug, communityId || 1],
+        type: QueryTypes.INSERT,
+      }
+    );
+
+    res.json(course[0][0]);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "Error creando curso" });
+  }
+});
 
 // ---------------------------------------------------------
 // 🔹 ASIGNAR CURSO MANUAL
@@ -480,5 +504,78 @@ router.post("/bulk/rentapn", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------
+// 🔹 CURSOS POR COMUNIDAD
+// ---------------------------------------------------------
+router.get("/community/:communityId", async (req, res) => {
+  const { communityId } = req.params;
+
+  try {
+    const courses = await sequelize.query(
+      `SELECT * FROM courses WHERE "communityId" = $1`,
+      {
+        bind: [communityId],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    res.json(courses);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "Error obteniendo cursos por comunidad" });
+  }
+});
+
+// ---------------------------------------------------------
+// 🔹 CREAR CURSO (ligado a comunidad)
+// ---------------------------------------------------------
+router.post("/", async (req, res) => {
+  const { title, slug, communityId } = req.body;
+
+  try {
+    const result = await sequelize.query(
+      `INSERT INTO courses(title, slug, "communityId")
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      {
+        bind: [title, slug, communityId || 1],
+        type: QueryTypes.INSERT,
+      }
+    );
+
+    res.json(result[0][0]);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "Error creando curso" });
+  }
+});
+// ---------------------------------------------------------
+// 🔹 OBTENER CURSO POR SLUG
+// ---------------------------------------------------------
+router.get("/slug/:slug", async (req, res) => {
+  const { slug } = req.params;
+
+  try {
+    const course = await sequelize.query(
+      `SELECT * FROM courses WHERE slug = $1 LIMIT 1`,
+      {
+        bind: [slug],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!course.length) {
+      return res.status(404).json({ ok: false, error: "Curso no encontrado" });
+    }
+
+    res.json(course[0]);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "Error obteniendo curso" });
+  }
+});
 
 export default router;

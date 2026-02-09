@@ -1,4 +1,7 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -16,7 +19,6 @@ export const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 🔥 AQUÍ SE DEFINE EL USER
     req.user = decoded;
 
     next();

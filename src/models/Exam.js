@@ -1,30 +1,27 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../database.js";
 
-const Course = sequelize.define(
-  "Course",
+const Exam = sequelize.define(
+  "Exam",
   {
     title: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-
-    slug: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    // 🔥 comunidad a la que pertenece el curso
-    communityId: {
+    passing_score: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 1,
+      defaultValue: 70,
+    },
+    course_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
   },
   {
-    tableName: "courses",
+    tableName: "exams",
     timestamps: false,
   }
 );
 
-export default Course;
+export default Exam;
