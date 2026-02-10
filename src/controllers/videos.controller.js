@@ -33,9 +33,9 @@ export const createVideo = async (req, res) => {
   try {
     const { title, url, orden, course_id } = req.body;
 
-    if (!title || !url || !course_id) {
+    if (!title || !url || !course_id || orden == null) {
       return res.status(400).json({
-        message: "Faltan datos obligatorios (title, url, course_id)",
+        message: "Faltan datos obligatorios (title, url, course_id, orden)",
       });
     }
 
@@ -47,11 +47,13 @@ export const createVideo = async (req, res) => {
     });
 
     res.json(video);
+
   } catch (error) {
     console.error("Error creando video:", error);
     res.status(500).json({ message: "Error creando video" });
   }
 };
+
 
 /* =========================
    EDITAR video
