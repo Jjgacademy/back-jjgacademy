@@ -30,13 +30,40 @@ export const createExam = async (req, res) => {
 ========================= */
 export const addQuestion = async (req, res) => {
   try {
-    const question = await Question.create(req.body);
-    res.json(question);
+    const {
+      exam_id,
+      question,
+      option_a,
+      option_b,
+      option_c,
+      option_d,
+      correct_option,
+    } = req.body;
+
+    if (!exam_id || !question || !correct_option) {
+      return res.status(400).json({
+        message: "Faltan datos obligatorios",
+      });
+    }
+
+    const newQuestion = await Question.create({
+      exam_id,
+      question,
+      option_a,
+      option_b,
+      option_c,
+      option_d,
+      correct_option,
+    });
+
+    res.json(newQuestion);
+
   } catch (error) {
-    console.error(error);
+    console.error("Error creando pregunta:", error);
     res.status(500).json({ message: "Error creando pregunta" });
   }
 };
+
 
 /* =========================
    OBTENER EXAMEN COMPLETO
