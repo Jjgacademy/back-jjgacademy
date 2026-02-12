@@ -182,53 +182,6 @@ export const submitExam = async (req, res) => {
       }
     }
 
-    // 🔒 validar intentos máximos
-    const attempts = await Attempt.count({
-      where: {
-        exam_id: examId,
-        user_id: userId,
-      },
-    });
-
-    if (attempts >= 2) {
-      return res.status(403).json({
-        message: "Intentos agotados",
-      });
-    }
-
-    const questionIds = Object.keys(answers).map(Number);
-
-    const questions = await Question.findAll({
-      where: {
-        exam_id: examId,
-        id: questionIds,
-      },
-    });
-
-    let score = 0;
-
-    for (const q of questions) {
-      const userAnswer = answers[q.id];
-
-      if (
-        userAnswer?.toUpperCase().trim() ===
-        q.correct_option?.toUpperCase().trim()
-      ) {
-        score++;
-      }
-    }
-
-    const aprobado = score >= 8;
-
-    // ✅ guardar intento
-    await Attempt.create({
-      exam_id: examId,
-      user_id: userId,
-      puntaje: score,
-      aprobado,
-      preguntas_usadas: questionIds,
-    });
-
 // 🔥 CREAR CERTIFICADO AUTOMÁTICO
 if (aprobado) {
 
@@ -249,13 +202,14 @@ if (aprobado) {
     await Certificate.create({
       user_id: userId,
       course_id: courseId,
-      full_name: user.name,
-      city: "Quito", // luego dinámico
+      full_name: user.name || "Alumno",
+      city: "Quito",
     });
 
     console.log("✅ Certificado creado");
   }
 }
+
 
     res.json({
       score,
