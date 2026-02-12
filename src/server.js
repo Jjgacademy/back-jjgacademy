@@ -80,13 +80,16 @@ import examRoutes from "./routes/exam.routes.js";
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://jjgacademy.com",
+      "http://jjgacademy.com"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
-
 
 // soporte JSON grande
 app.use(express.json({ limit: "10mb" }));
