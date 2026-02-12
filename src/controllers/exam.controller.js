@@ -4,6 +4,10 @@ import { Op } from "sequelize";
 import Exam from "../models/Exam.js";
 import Question from "../models/Question.js";
 import Attempt from "../models/Attempt.js";
+import Certificate from "../models/Certificate.js";
+import User from "../models/User.js";
+import Course from "../models/Course.js";
+
 
 /* =========================
    CREAR EXAMEN
@@ -166,7 +170,7 @@ export const submitExam = async (req, res) => {
       order: [["id", "DESC"]],
     });
 
-    // 🔥 PROTECCIÓN: evita doble envío accidental (5 segundos)
+    // 🔥 PROTECCIÓN: evita doble envío accidental
     if (ultimoIntento) {
       const diff =
         Date.now() - new Date(ultimoIntento.createdAt).getTime();
@@ -216,7 +220,7 @@ export const submitExam = async (req, res) => {
 
     const aprobado = score >= 8;
 
-    // ✅ guardar intento limpio
+    // ✅ guardar intento
     await Attempt.create({
       exam_id: examId,
       user_id: userId,
@@ -225,13 +229,41 @@ export const submitExam = async (req, res) => {
       preguntas_usadas: questionIds,
     });
 
+// 🔥 CREAR CERTIFICADO AUTOMÁTICO
+if (aprobado) {
+
+  const exam = await Exam.findByPk(examId);
+  const courseId = exam.course_id;
+
+  const existe = await Certificate.findOne({
+    where: {
+      user_id: userId,
+      course_id: courseId,
+    },
+  });
+
+  if (!existe) {
+
+    const user = await User.findByPk(userId);
+
+    await Certificate.create({
+      user_id: userId,
+      course_id: courseId,
+      full_name: user.name,
+      city: "Quito", // luego dinámico
+    });
+
+    console.log("✅ Certificado creado");
+  }
+}
+
     res.json({
       score,
       aprobado,
       certificado: aprobado,
       message: aprobado
-        ? "Examen aprobado — puede generar certificado"
-        : "Examen reprobado — no puede generar certificado",
+        ? "Examen aprobado — certificado generado"
+        : "Examen reprobado",
     });
 
   } catch (error) {
@@ -239,4 +271,3 @@ export const submitExam = async (req, res) => {
     res.status(500).json({ message: "Error enviando examen" });
   }
 };
-
