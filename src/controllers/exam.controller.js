@@ -142,6 +142,9 @@ export const getRandomExam = async (req, res) => {
 /* =========================
    ENVIAR EXAMEN
 ========================= */
+/* =========================
+   ENVIAR EXAMEN (ANTI DUPLICADO)
+========================= */
 export const submitExam = async (req, res) => {
   try {
     const { examId } = req.params;
@@ -154,7 +157,28 @@ export const submitExam = async (req, res) => {
       });
     }
 
-    // 🔒 validar intentos
+    // 🔒 Último intento del usuario
+    const ultimoIntento = await Attempt.findOne({
+      where: {
+        exam_id: examId,
+        user_id: userId,
+      },
+      order: [["id", "DESC"]],
+    });
+
+    // 🔥 PROTECCIÓN: evita doble envío accidental (5 segundos)
+    if (ultimoIntento) {
+      const diff =
+        Date.now() - new Date(ultimoIntento.createdAt).getTime();
+
+      if (diff < 5000) {
+        return res.status(400).json({
+          message: "Examen ya enviado. Espera unos segundos.",
+        });
+      }
+    }
+
+    // 🔒 validar intentos máximos
     const attempts = await Attempt.count({
       where: {
         exam_id: examId,
@@ -190,10 +214,9 @@ export const submitExam = async (req, res) => {
       }
     }
 
-    // 🔥 REGLA GLOBAL: mínimo 8 para aprobar
     const aprobado = score >= 8;
 
-    // 🔥 guardar intento
+    // ✅ guardar intento limpio
     await Attempt.create({
       exam_id: examId,
       user_id: userId,
@@ -205,7 +228,7 @@ export const submitExam = async (req, res) => {
     res.json({
       score,
       aprobado,
-      certificado: aprobado, // 👈 solo true si sacó 8+
+      certificado: aprobado,
       message: aprobado
         ? "Examen aprobado — puede generar certificado"
         : "Examen reprobado — no puede generar certificado",
@@ -216,3 +239,4 @@ export const submitExam = async (req, res) => {
     res.status(500).json({ message: "Error enviando examen" });
   }
 };
+
