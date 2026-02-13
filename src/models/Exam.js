@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../database.js";
+import Attempt from "./Attempt.js";
 
 const Exam = sequelize.define(
   "Exam",
@@ -23,5 +24,9 @@ const Exam = sequelize.define(
     timestamps: false,
   }
 );
+
+Exam.hasMany(Attempt, {
+  foreignKey: "exam_id",
+});
 
 export default Exam;
