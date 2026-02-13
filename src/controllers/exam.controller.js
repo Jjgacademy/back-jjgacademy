@@ -96,61 +96,53 @@ export const getRandomExam = async (req, res) => {
     const { examId } = req.params;
     const userId = req.user.id;
 
-    // 🔒 validar intentos máximos
-    const attempts = await Attempt.count({
+    const attempts = await Attempt.findAll({
       where: {
         exam_id: examId,
         user_id: userId,
       },
     });
 
-    if (attempts >= 2) {
+    if (attempts.length >= 2) {
       return res.status(403).json({
         message: "Intentos agotados",
       });
     }
 
-    // 🔥 preguntas ya usadas
-    const usadas = attempts.flatMap((a) => {
-      if (!a.preguntas_usadas) return [];
+    let usadas = [];
+
+    for (const a of attempts) {
+      if (!a.preguntas_usadas) continue;
 
       try {
-        return Array.isArray(a.preguntas_usadas)
+        const arr = Array.isArray(a.preguntas_usadas)
           ? a.preguntas_usadas
           : JSON.parse(a.preguntas_usadas);
-      } catch {
-        return [];
-      }
-    });
+
+        usadas = usadas.concat(arr);
+      } catch {}
+    }
 
     const preguntas = await Question.findAll({
       where: {
         exam_id: examId,
-        id: { [Op.notIn]: usadas },
+        id: usadas.length ? { [Op.notIn]: usadas } : { [Op.ne]: null },
       },
       order: sequelize.random(),
       limit: 10,
       attributes: {
-        exclude: ["correct_option"], // ocultar respuesta correcta
+        exclude: ["correct_option"],
       },
     });
 
-    if (preguntas.length < 10) {
-      return res.status(400).json({
-        message: "No hay suficientes preguntas nuevas",
-      });
-    }
-
     res.json(preguntas);
+
   } catch (error) {
-    console.error(error);
+    console.error("ERROR RANDOM:", error);
     res.status(500).json({ message: "Error generando examen" });
   }
 };
 
-/* =========================
-   ENVIAR EXAMEN
-========================= */
 /* =========================
    ENVIAR EXAMEN (ANTI DUPLICADO)
 ========================= */
@@ -166,16 +158,52 @@ export const submitExam = async (req, res) => {
       });
     }
 
-    // 🔒 Último intento del usuario
-    const ultimoIntento = await Attempt.findOne({
+    const attempts = await Attempt.count({
       where: {
         exam_id: examId,
         user_id: userId,
       },
-      order: [["id", "DESC"]],
     });
 
-    // 🔥 CREAR CERTIFICADO AUTOMÁTICO
+    if (attempts >= 2) {
+      return res.status(403).json({
+        message: "Intentos agotados",
+      });
+    }
+
+    const questionIds = Object.keys(answers).map(Number);
+
+    const questions = await Question.findAll({
+      where: {
+        exam_id: examId,
+        id: questionIds,
+      },
+    });
+
+    let score = 0;
+
+    for (const q of questions) {
+      const userAnswer = answers[q.id];
+
+      if (
+        userAnswer?.toUpperCase().trim() ===
+        q.correct_option?.toUpperCase().trim()
+      ) {
+        score++;
+      }
+    }
+
+    const aprobado = score >= 8;
+
+    await Attempt.create({
+      exam_id: examId,
+      user_id: userId,
+      puntaje: score,
+      aprobado,
+      preguntas_usadas: questionIds,
+    });
+
+    // 🔥 CERTIFICADO AUTOMÁTICO
     if (aprobado) {
       const exam = await Exam.findByPk(examId);
       const courseId = exam.course_id;
@@ -193,7 +221,7 @@ export const submitExam = async (req, res) => {
         await Certificate.create({
           user_id: userId,
           course_id: courseId,
-          full_name: user.name || "Alumno",
+          full_name: user?.name || "Alumno",
           city: "Quito",
         });
 
@@ -209,8 +237,10 @@ export const submitExam = async (req, res) => {
         ? "Examen aprobado — certificado generado"
         : "Examen reprobado",
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("ERROR SUBMIT:", error);
     res.status(500).json({ message: "Error enviando examen" });
   }
 };
+
