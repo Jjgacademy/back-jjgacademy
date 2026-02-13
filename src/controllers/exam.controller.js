@@ -8,7 +8,6 @@ import Certificate from "../models/Certificate.js";
 import User from "../models/User.js";
 import Course from "../models/Course.js";
 
-
 /* =========================
    CREAR EXAMEN
 ========================= */
@@ -61,13 +60,11 @@ export const addQuestion = async (req, res) => {
     });
 
     res.json(newQuestion);
-
   } catch (error) {
     console.error("Error creando pregunta:", error);
     res.status(500).json({ message: "Error creando pregunta" });
   }
 };
-
 
 /* =========================
    OBTENER EXAMEN COMPLETO
@@ -91,7 +88,6 @@ export const getExam = async (req, res) => {
   }
 };
 
-
 /* =========================
    EXAMEN RANDOM SIN REPETIR
 ========================= */
@@ -100,22 +96,22 @@ export const getRandomExam = async (req, res) => {
     const { examId } = req.params;
     const userId = req.user.id;
 
-    // 🔒 contar intentos previos
-    const attempts = await Attempt.findAll({
+    // 🔒 validar intentos máximos
+    const attempts = await Attempt.count({
       where: {
         exam_id: examId,
         user_id: userId,
       },
     });
 
-    if (attempts.length >= 2) {
+    if (attempts >= 2) {
       return res.status(403).json({
-        message: "Máximo de intentos alcanzado",
+        message: "Intentos agotados",
       });
     }
 
     // 🔥 preguntas ya usadas
-    const usadas = attempts.flatMap(a => a.preguntas_usadas || []);
+    const usadas = attempts.flatMap((a) => a.preguntas_usadas || []);
 
     const preguntas = await Question.findAll({
       where: {
@@ -136,7 +132,6 @@ export const getRandomExam = async (req, res) => {
     }
 
     res.json(preguntas);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error generando examen" });
@@ -170,46 +165,31 @@ export const submitExam = async (req, res) => {
       order: [["id", "DESC"]],
     });
 
-    // 🔥 PROTECCIÓN: evita doble envío accidental
-    if (ultimoIntento) {
-      const diff =
-        Date.now() - new Date(ultimoIntento.createdAt).getTime();
+    // 🔥 CREAR CERTIFICADO AUTOMÁTICO
+    if (aprobado) {
+      const exam = await Exam.findByPk(examId);
+      const courseId = exam.course_id;
 
-      if (diff < 5000) {
-        return res.status(400).json({
-          message: "Examen ya enviado. Espera unos segundos.",
+      const existe = await Certificate.findOne({
+        where: {
+          user_id: userId,
+          course_id: courseId,
+        },
+      });
+
+      if (!existe) {
+        const user = await User.findByPk(userId);
+
+        await Certificate.create({
+          user_id: userId,
+          course_id: courseId,
+          full_name: user.name || "Alumno",
+          city: "Quito",
         });
+
+        console.log("✅ Certificado creado");
       }
     }
-
-// 🔥 CREAR CERTIFICADO AUTOMÁTICO
-if (aprobado) {
-
-  const exam = await Exam.findByPk(examId);
-  const courseId = exam.course_id;
-
-  const existe = await Certificate.findOne({
-    where: {
-      user_id: userId,
-      course_id: courseId,
-    },
-  });
-
-  if (!existe) {
-
-    const user = await User.findByPk(userId);
-
-    await Certificate.create({
-      user_id: userId,
-      course_id: courseId,
-      full_name: user.name || "Alumno",
-      city: "Quito",
-    });
-
-    console.log("✅ Certificado creado");
-  }
-}
-
 
     res.json({
       score,
@@ -219,7 +199,6 @@ if (aprobado) {
         ? "Examen aprobado — certificado generado"
         : "Examen reprobado",
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error enviando examen" });
