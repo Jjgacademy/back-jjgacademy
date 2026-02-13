@@ -111,7 +111,17 @@ export const getRandomExam = async (req, res) => {
     }
 
     // 🔥 preguntas ya usadas
-    const usadas = attempts.flatMap((a) => a.preguntas_usadas || []);
+    const usadas = attempts.flatMap((a) => {
+      if (!a.preguntas_usadas) return [];
+
+      try {
+        return Array.isArray(a.preguntas_usadas)
+          ? a.preguntas_usadas
+          : JSON.parse(a.preguntas_usadas);
+      } catch {
+        return [];
+      }
+    });
 
     const preguntas = await Question.findAll({
       where: {
