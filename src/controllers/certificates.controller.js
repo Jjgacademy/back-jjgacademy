@@ -13,16 +13,32 @@ export const saveCertificate = async (req, res) => {
     const userId = req.user.id;
     const { course_id, full_name } = req.body;
     /* 🔒 VALIDAR EXAMEN APROBADO */
+
+    // buscar examen del curso
+    const exam = await Exam.findOne({
+      where: { course_id },
+    });
+
+    if (!exam) {
+      return res.status(404).json({
+        message: "Examen no encontrado para este curso",
+      });
+    }
+
+    // verificar intento aprobado
     const aprobado = await Attempt.findOne({
       where: {
         user_id: userId,
+        exam_id: exam.id,
         aprobado: true,
       },
-      include: {
-        model: Exam,
-        where: { course_id },
-      },
     });
+
+    if (!aprobado) {
+      return res.status(403).json({
+        message: "Debe aprobar el examen para generar certificado",
+      });
+    }
 
     if (!aprobado) {
       return res.status(403).json({
