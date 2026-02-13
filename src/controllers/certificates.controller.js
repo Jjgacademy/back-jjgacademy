@@ -5,32 +5,30 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import Attempt from "../models/Attempt.js";
 import Exam from "../models/Exam.js";
 
-
 /* ===============================
    GUARDAR CERTIFICADO (1 SOLA VEZ)
 ================================ */
 export const saveCertificate = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { course_id, full_name, city } = req.body;
+    const { course_id, full_name } = req.body;
     /* 🔒 VALIDAR EXAMEN APROBADO */
-const aprobado = await Attempt.findOne({
-  where: {
-    user_id: userId,
-    aprobado: true,
-  },
-  include: {
-    model: Exam,
-    where: { course_id },
-  },
-});
+    const aprobado = await Attempt.findOne({
+      where: {
+        user_id: userId,
+        aprobado: true,
+      },
+      include: {
+        model: Exam,
+        where: { course_id },
+      },
+    });
 
-if (!aprobado) {
-  return res.status(403).json({
-    message: "Debe aprobar el examen para generar certificado",
-  });
-}
-
+    if (!aprobado) {
+      return res.status(403).json({
+        message: "Debe aprobar el examen para generar certificado",
+      });
+    }
 
     if (!userId || !course_id || !full_name) {
       return res.status(400).json({ message: "Datos incompletos" });
@@ -48,76 +46,21 @@ if (!aprobado) {
     }
 
     let pdfPath = "";
-    let certCity = null;
-
-    /* ===== MAPEO CURSO → PDF ===== */
 
     if (Number(course_id) === 1) {
-      pdfPath = "certificados/actualizacionLaboral.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 3) {
-      if (!city || typeof city !== "string" || city.trim() === "") {
-        return res.status(400).json({ message: "Ciudad requerida" });
-      }
-
-      const cleanCity = city.trim().toLowerCase();
-      pdfPath = `certificados/${cleanCity}.pdf`;
-      certCity = cleanCity;
-    }
-
-    else if (Number(course_id) === 4) {
-      pdfPath = "certificados/actualizacionLaboralProtocolo.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 5) {
-      pdfPath = "certificados/agenciaDeViajes.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 7) {
-      pdfPath = "certificados/nic_2.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 8) {
-      pdfPath = "certificados/niif_16.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 10) {
-      pdfPath = "certificados/anexoRdp.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 12) {
-      pdfPath = "certificados/sinFinesDeLucroContable.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 13) {
-      pdfPath = "certificados/sinFinesDeLucroTributario.pdf";
-      certCity = "quito";
-    }
-
-    else if (Number(course_id) === 14) {
-      pdfPath = "certificados/declaracionIr.pdf";
-      certCity = "quito";
-    }
-
-    else {
+      pdfPath = "certificados/anexo_rebefics.pdf";
+    } else {
       return res.status(400).json({
-        message: "Curso no configurado para certificados",
+        message: "Este curso no tiene certificado configurado",
       });
     }
+
+    /* ===== MAPEO CURSO → PDF ===== */
 
     const cert = await Certificate.create({
       user_id: userId,
       course_id,
       full_name,
-      city: certCity,
       pdf_path: pdfPath,
     });
 
@@ -174,7 +117,7 @@ export const downloadCertificate = async (req, res) => {
       process.cwd(),
       "src",
       "assets",
-      cert.pdf_path
+      cert.pdf_path,
     );
 
     if (!fs.existsSync(basePdfPath)) {
@@ -211,7 +154,7 @@ export const downloadCertificate = async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      'attachment; filename="certificado.pdf"'
+      'attachment; filename="certificado.pdf"',
     );
 
     res.send(Buffer.from(finalPdf));
