@@ -136,7 +136,6 @@ export const getRandomExam = async (req, res) => {
     });
 
     res.json(preguntas);
-
   } catch (error) {
     console.error("ERROR RANDOM:", error);
     res.status(500).json({ message: "Error generando examen" });
@@ -222,7 +221,6 @@ export const submitExam = async (req, res) => {
           user_id: userId,
           course_id: courseId,
           full_name: user?.name || "Alumno",
-          city: "Quito",
         });
 
         console.log("✅ Certificado creado");
@@ -237,10 +235,8 @@ export const submitExam = async (req, res) => {
         ? "Examen aprobado — certificado generado"
         : "Examen reprobado",
     });
-
   } catch (error) {
     console.error("ERROR SUBMIT:", error);
     res.status(500).json({ message: "Error enviando examen" });
   }
 };
-

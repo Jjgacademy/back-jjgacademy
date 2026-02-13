@@ -18,12 +18,6 @@ const Certificate = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-
-    // 🔥 CAMBIO CLAVE: city ahora es OPCIONAL
-    city: {
-      type: DataTypes.ENUM("quito", "guayaquil", "cuenca"),
-      allowNull: true, // 👈 ANTES false
-    },
   },
   {
     tableName: "certificates",
