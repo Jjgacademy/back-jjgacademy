@@ -11,7 +11,9 @@ import Exam from "../models/Exam.js";
 export const saveCertificate = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { course_id, full_name } = req.body;
+    const course_id = Number(req.body.course_id);
+const full_name = req.body.full_name;
+
     /* 🔒 VALIDAR EXAMEN APROBADO */
 
     // buscar examen del curso
@@ -33,12 +35,6 @@ export const saveCertificate = async (req, res) => {
         aprobado: true,
       },
     });
-
-    if (!aprobado) {
-      return res.status(403).json({
-        message: "Debe aprobar el examen para generar certificado",
-      });
-    }
 
     if (!aprobado) {
       return res.status(403).json({
@@ -133,7 +129,7 @@ export const downloadCertificate = async (req, res) => {
       process.cwd(),
       "src",
       "assets",
-      cert.pdf_path,
+      cert.pdf_path
     );
 
     if (!fs.existsSync(basePdfPath)) {

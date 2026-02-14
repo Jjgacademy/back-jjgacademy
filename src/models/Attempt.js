@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../database.js";
-import Exam from "./Exam.js";
 
 const Attempt = sequelize.define(
   "Attempt",
@@ -41,9 +40,5 @@ const Attempt = sequelize.define(
     timestamps: false,
   }
 );
-
-Attempt.belongsTo(Exam, {
-  foreignKey: "exam_id",
-});
 
 export default Attempt;
