@@ -586,4 +586,33 @@ router.get("/slug/:slug", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------
+// 🔹 CURSOS DEL USUARIO LOGUEADO (MY COURSES)
+// ---------------------------------------------------------
+router.get("/my/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const courses = await sequelize.query(
+      `SELECT c.*
+       FROM user_courses uc
+       JOIN courses c ON c.id = uc.course_id
+       WHERE uc.user_id = $1`,
+      {
+        bind: [id],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    res.json(courses);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      ok: false,
+      error: "Error obteniendo cursos del usuario",
+    });
+  }
+});
+
 export default router;
