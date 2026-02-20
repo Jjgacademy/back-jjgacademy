@@ -24,7 +24,7 @@ export const getCourseBySlug = async (req, res) => {
       return res.status(404).json({ message: "Curso no encontrado" });
     }
 
-    // 🔥 VALIDAR SI EL USUARIO TIENE ACCESO AL CURSO
+    // 🔥 VALIDAR ACCESO DEL USUARIO
     const access = await UserCourse.findOne({
       where: {
         user_id: userId,
@@ -78,16 +78,21 @@ export const getUserCourses = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findByPk(userId, {
-      include: {
-        model: Course,
-        through: { attributes: [] },
-      },
+    const courses = await Course.findAll({
+      include: [
+        {
+          model: User,
+          where: { id: userId },
+          through: { attributes: [] },
+          attributes: [],
+        },
+      ],
     });
 
-    res.json(user.courses);
+    res.json(courses);
 
   } catch (error) {
+    console.error("Error getUserCourses:", error);
     res.status(500).json({ message: error.message });
   }
 };
